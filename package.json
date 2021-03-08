@@ -1,0 +1,32 @@
+{
+  "name": "mp3-server",
+  "description": "A simple streaming mp3 server",
+  "version": "1.0.0",
+  "author": "Luke Karrys",
+  "dependencies": {
+    "mediaserver": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.32",
+    "prettier": "^2.2.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "main": "index.js",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  },
+  "private": true,
+  "scripts": {
+    "check": "tsc --project tsconfig.json --noEmit",
+    "dev": "nodemon --exec 'PORT=3002 ts-node index.ts' --ext ts",
+    "start": "ts-node index.ts",
+    "sync:mp3": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/var/www/html/mp3"
+  },
+  "volta": {
+    "node": "12.18.1"
+  }
+}
