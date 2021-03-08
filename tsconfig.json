@@ -5,8 +5,7 @@
     "target": "ES2019",
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./typeRoots", "node_modules/@types"]
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["**/*.ts"]
 }

@@ -3,9 +3,7 @@
   "description": "A simple streaming mp3 server",
   "version": "1.0.0",
   "author": "Luke Karrys",
-  "dependencies": {
-    "mediaserver": "^0.1.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^14.14.32",
     "prettier": "^2.2.1",

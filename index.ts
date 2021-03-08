@@ -1,5 +1,5 @@
 import http, { IncomingMessage, ServerResponse } from 'http'
-import ms from 'mediaserver'
+import { pipe } from './mediaserver'
 import path from 'path'
 import { URL } from 'url'
 
@@ -8,9 +8,13 @@ const port = process.env.PORT || 3000
 const error = (
   res: ServerResponse,
   status: number = 500,
-  e: Error | string = 'An unknown error occurred'
+  e: Error | string = 'An unknown error occurred',
+  privateError?: Error
 ) => {
-  console.log(`Error: ${status} ${e}`)
+  console.log('Error:', status, e)
+  if (privateError) {
+    console.log('Unknown error:', privateError)
+  }
   res.writeHead(status)
   res.end(
     JSON.stringify({
@@ -28,23 +32,22 @@ http
     try {
       const { method } = req
       const parsedUrl = parseUrl(req)
+      const id = parsedUrl.searchParams.get('id')
 
       console.log(`${method}: ${strUrl(parsedUrl)}`)
 
-      const id = parsedUrl.searchParams.get('id')
-      if (!id) {
-        return error(res, 400, 'No id')
-      }
-
       if (parsedUrl.pathname === '/mp3' && method === 'GET' && id) {
-        console.log(`Streaming: ${id} ${req.headers.range}`)
-        return ms.pipe(req, res, path.resolve(__dirname, 'mp3', `${id}.mp3`))
+        const mp3 = path.resolve(__dirname, 'mp3', `${id}.mp3`)
+        const stream = pipe(req, res, mp3, error)
+        if (stream) {
+          console.log(`Streaming: ${id} ${stream.join(',')}`)
+        }
+        return
       }
 
       return error(res, 404, 'Not found')
     } catch (e) {
-      console.log('Unknown error', e)
-      return error(res, 500, 'An unknown error occurred')
+      return error(res, 500, 'An unknown error occurred', e)
     }
   })
   .listen(port, () => console.log(`Listening on ${port}`))
