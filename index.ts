@@ -1,5 +1,5 @@
 import http, { IncomingMessage, ServerResponse } from 'http'
-import { pipe } from './mediaserver'
+import streamAudio from './streamAudio'
 import path from 'path'
 import { URL } from 'url'
 
@@ -38,7 +38,7 @@ http
 
       if (parsedUrl.pathname === '/mp3' && method === 'GET' && id) {
         const mp3 = path.resolve(__dirname, 'mp3', `${id}.mp3`)
-        const stream = pipe(req, res, mp3, error)
+        const stream = streamAudio(req, res, mp3, error)
         if (stream) {
           console.log(`Streaming: ${id} ${stream.join(',')}`)
         }
