@@ -22,7 +22,8 @@
     "check": "tsc --project tsconfig.json --noEmit",
     "dev": "nodemon --exec 'PORT=3002 ts-node index.ts' --ext ts",
     "start": "ts-node index.ts",
-    "sync:mp3": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/var/www/html/mp3"
+    "mp3:upload": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/var/www/html/mp3",
+    "mp3:dl": "youtube-dl -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 -o \"./mp3_new/%(id)s.%(ext)s\" PLRSI_QNxGZ2lZP141po9tLGpLqM6ciuP1"
   },
   "volta": {
     "node": "12.18.1"
