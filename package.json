@@ -3,8 +3,13 @@
   "description": "A simple streaming mp3 server",
   "version": "1.0.0",
   "author": "Luke Karrys",
-  "dependencies": {},
+  "dependencies": {
+    "execa": "^5.0.0",
+    "fs-extra": "^9.1.0",
+    "temp-dir": "^2.0.0"
+  },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.11",
     "@types/node": "^14.14.32",
     "prettier": "^2.2.1",
     "ts-node": "^9.1.1",
@@ -22,8 +27,7 @@
     "check": "tsc --project tsconfig.json --noEmit",
     "dev": "nodemon --exec 'PORT=3002 ts-node index.ts' --ext ts",
     "start": "ts-node index.ts",
-    "mp3:upload": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/var/www/html/mp3",
-    "mp3:dl": "youtube-dl -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 -o \"./mp3_new/%(id)s.%(ext)s\""
+    "mp3:upload": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/var/www/html/mp3"
   },
   "volta": {
     "node": "12.18.1"

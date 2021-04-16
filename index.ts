@@ -2,6 +2,8 @@ import http, { IncomingMessage, ServerResponse } from 'http'
 import streamAudio from './streamAudio'
 import path from 'path'
 import { URL } from 'url'
+import fs from 'fs-extra'
+import downloadFile from './downloadFile'
 
 const port = process.env.PORT || 3000
 
@@ -28,7 +30,7 @@ const parseUrl = (req: IncomingMessage) => new URL(req.url || '', ABSOLUTE_URL)
 const strUrl = (url: URL) => url.toString().replace(ABSOLUTE_URL, '')
 
 http
-  .createServer((req, res) => {
+  .createServer(async (req, res) => {
     try {
       const { method } = req
       const parsedUrl = parseUrl(req)
@@ -36,9 +38,20 @@ http
 
       console.log(`${method}: ${strUrl(parsedUrl)}`)
 
+      if (!id) {
+        return error(res, 404, 'Not found')
+      }
+
+      const mp3Path = path.resolve(__dirname, 'mp3', `${id}.mp3`)
+      const mp3Exists = await fs.pathExists(mp3Path)
+
+      if (!mp3Exists) {
+        console.log(`Downloading file: ${id}`)
+        await downloadFile(id, path.dirname(mp3Path))
+      }
+
       if (parsedUrl.pathname === '/mp3' && method === 'GET' && id) {
-        const mp3 = path.resolve(__dirname, 'mp3', `${id}.mp3`)
-        const stream = streamAudio(req, res, mp3, error)
+        const stream = streamAudio(req, res, mp3Path, error)
         if (stream) {
           console.log(`Streaming: ${id} ${stream.join(',')}`)
         }
