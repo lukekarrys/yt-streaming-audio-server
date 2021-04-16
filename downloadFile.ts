@@ -3,10 +3,10 @@ import os from 'os'
 import fs from 'fs-extra'
 import path from 'path'
 
-const tmpdir = os.tmpdir()
+const savedir = os.homedir()
 
 const downloadFile = async (id: string, dest: string) => {
-  const tmpPath = `${tmpdir}/%(id)s.%(ext)s`
+  const tmpPath = `${savedir}/%(id)s.%(ext)s`
 
   console.log(`Downloading to ${tmpPath}`)
 
@@ -26,7 +26,7 @@ const downloadFile = async (id: string, dest: string) => {
   console.log('stdout', stdout)
   console.log('stderr', stderr)
 
-  await fs.move(path.join(tmpdir, `${id}.mp3`), path.join(dest, `${id}.mp3`))
+  await fs.move(path.join(savedir, `${id}.mp3`), path.join(dest, `${id}.mp3`))
 }
 
 export default downloadFile
