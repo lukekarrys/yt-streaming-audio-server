@@ -1,7 +1,7 @@
 import execa from 'execa'
 
 const downloadFile = async (id: string, dest: string) => {
-  const tmpPath = `./mp3/%(id)s.%(ext)s`
+  const tmpPath = `${process.cwd()}/mp3/%(id)s.%(ext)s`
 
   console.log(`Downloading to ${tmpPath}`)
 
