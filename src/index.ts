@@ -92,7 +92,7 @@ const main = async () => {
 
   setInterval(async () => {
     const deleted = await db.deleteLRU(bytes.parse(MAX_DIR_SIZE))
-    log('[deleted]', deleted.length, deleted.map((v) => v.id).join(','))
+    log('[deleted]', deleted.length, JSON.stringify(deleted))
   }, ms(DELETE_LRU_INTERVAL))
 
   return createServer(+PORT, db).then((port) => log(`Listening on ${port}`))
