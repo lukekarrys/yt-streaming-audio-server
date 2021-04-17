@@ -112,9 +112,9 @@ const pipe = (
 
   const fileStream = fs.createReadStream(filePath, { start, end })
 
+  // Listen for all possible events that would need to cleanup the filestream
   res.on('close', () => fileStream.close())
   res.on('end', () => fileStream.close())
-  // https://stackoverflow.com/a/14093091, https://stackoverflow.com/a/38057516
   res.on('finish', () => fileStream.close())
 
   fileStream.on('error', (error) => {

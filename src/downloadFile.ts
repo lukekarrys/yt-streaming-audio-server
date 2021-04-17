@@ -1,14 +1,19 @@
 import { spawn } from 'child_process'
 import path from 'path'
-import { mp3Dir } from './config'
+import { MP3_DIR } from './config'
+import isValidId from './validId'
 
 const downloadFile = (
   id: string,
   log: (...args: unknown[]) => void
 ): Promise<{ output: string }> => {
+  // Double check that its a valid id so we are less likely to
+  // accidentally pass something arbitrary to spawn
+  isValidId(id)
+
   const ytLog = (...args: unknown[]) => log('[youtube-dl]', ...args)
 
-  const outputFile = path.join(mp3Dir, `${id}.mp3`)
+  const outputFile = path.join(MP3_DIR, `${id}.mp3`)
 
   ytLog(`downloading to ${outputFile}`)
 
@@ -24,7 +29,7 @@ const downloadFile = (
       '--audio-quality',
       '0',
       '-o',
-      path.join(mp3Dir, '%(id)s.%(ext)s'),
+      path.join(MP3_DIR, '%(id)s.%(ext)s'),
       id,
     ])
 

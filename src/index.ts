@@ -4,7 +4,7 @@ import path from 'path'
 import { URL } from 'url'
 import fs from 'fs-extra'
 import downloadFile from './downloadFile'
-import { mp3Dir } from './config'
+import { MP3_DIR } from './config'
 import HTTPError from './error'
 import isValidId from './validId'
 
@@ -32,7 +32,7 @@ http
       const id = parsedUrl.searchParams.get('id')
 
       if (parsedUrl.pathname === '/mp3' && method === 'GET' && isValidId(id)) {
-        const mp3Path = path.join(mp3Dir, `${id}.mp3`)
+        const mp3Path = path.join(MP3_DIR, `${id}.mp3`)
         const mp3Exists = await fs.pathExists(mp3Path)
 
         if (!mp3Exists) {
@@ -52,16 +52,18 @@ http
       )
     } catch (error) {
       const status = error instanceof HTTPError ? error.status : 500
+      const message =
+        error instanceof HTTPError ? error.message : 'An unknown error occurred'
+
+      logRequestError(status, message)
+
       const internalMessage =
         error instanceof HTTPError
           ? error.originalError?.message
           : error instanceof Error
           ? error.message
           : error
-      const message =
-        error instanceof HTTPError ? error.message : 'An unknown error occurred'
 
-      logRequestError(status, message)
       if (internalMessage) logRequestError(internalMessage)
 
       res.writeHead(status)
