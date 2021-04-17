@@ -3,19 +3,22 @@ import streamAudio from './streamAudio'
 import path from 'path'
 import { URL } from 'url'
 import fs from 'fs-extra'
+import ms from 'ms'
+import bytes from 'bytes'
+import createDb, { DB } from './db'
 import downloadFile from './downloadFile'
-import { MP3_DIR } from './config'
+import { MP3_DIR, MAX_DIR_SIZE, DELETE_LRU_INTERVAL } from './config'
 import HTTPError from './error'
 import isValidId from './validId'
 
-const port = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000
 
 const ABSOLUTE_URL = 'http://a.a'
 const parseUrl = (req: IncomingMessage) => new URL(req.url || '', ABSOLUTE_URL)
 const strUrl = (url: URL) => url.toString().replace(ABSOLUTE_URL, '')
 
-http
-  .createServer(async (req, res) => {
+const createServer = (port: number, db: DB) => {
+  const server = http.createServer(async (req, res) => {
     const { method } = req
     const parsedUrl = parseUrl(req)
     const randomId = Math.random().toString().slice(2, 6)
@@ -23,14 +26,15 @@ http
 
     const logRequest = (...args: unknown[]) =>
       console.log('[request]', reqId, ...args)
+
     const logRequestError = (...args: unknown[]) =>
       console.error('[error]', reqId, ...args)
 
+    logRequest()
+
+    const id = parsedUrl.searchParams.get('id')
+
     try {
-      logRequest()
-
-      const id = parsedUrl.searchParams.get('id')
-
       if (parsedUrl.pathname === '/mp3' && method === 'GET' && isValidId(id)) {
         const mp3Path = path.join(MP3_DIR, `${id}.mp3`)
         const mp3Exists = await fs.pathExists(mp3Path)
@@ -42,6 +46,10 @@ http
 
         const stream = streamAudio(req, res, mp3Path)
         logRequest(`streaming: ${stream.join(',')}`)
+
+        // File has been used so update the last read time
+        await db.peek(id, stream[stream.length - 1])
+
         return
       }
 
@@ -70,4 +78,26 @@ http
       res.end(JSON.stringify({ error: message }))
     }
   })
-  .listen(port, () => console.log('[server]', `Listening on ${port}`))
+
+  return new Promise((resolve) => server.listen(port, () => resolve(port)))
+}
+
+const main = async () => {
+  const log = (...args: unknown[]) => console.log('[init]', ...args)
+
+  const db = await createDb()
+
+  const seeded = await db.seedLRU()
+  log('[seeded]', seeded.length, seeded.map((v) => v.id).join(','))
+
+  setInterval(async () => {
+    const deleted = await db.deleteLRU(bytes.parse(MAX_DIR_SIZE))
+    log('[deleted]', deleted.length, deleted.map((v) => v.id).join(','))
+  }, ms(DELETE_LRU_INTERVAL))
+
+  return createServer(+PORT, db).then((port) => log(`Listening on ${port}`))
+}
+
+main().catch((err) => {
+  console.error('Server could not be started', err)
+})
