@@ -21,7 +21,6 @@ A request to `/mp3?id=ID` will:
 - Check if `MP3_DIR/ID.mp3` exists
 - If not, then try to download an mp3 version from `youtube.com/watch?v=ID` to `MP3_DIR/ID.mp3`
 - Then it will stream the file from the appropriate start time based on the `range` header
-- Every `DELETE_LRU_INTERVAL` th
 
 ### Development
 
