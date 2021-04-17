@@ -52,17 +52,17 @@ http
       )
     } catch (error) {
       const status = error instanceof HTTPError ? error.status : 500
-      const internalError =
+      const internalMessage =
         error instanceof HTTPError
-          ? error.originalError
+          ? error.originalError?.message
           : error instanceof Error
-          ? error
-          : null
+          ? error.message
+          : error
       const message =
         error instanceof HTTPError ? error.message : 'An unknown error occurred'
 
       logRequestError(status, message)
-      if (internalError) logRequestError(internalError.message)
+      if (internalMessage) logRequestError(internalMessage)
 
       res.writeHead(status)
       res.end(JSON.stringify({ error: message }))
