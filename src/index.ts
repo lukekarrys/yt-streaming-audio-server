@@ -30,12 +30,13 @@ http
         const mp3Exists = await fs.pathExists(mp3Path)
 
         if (!mp3Exists) {
-          log(`File not found at ${mp3Path}`)
+          log(`file not found at ${mp3Path}`)
           await downloadFile(id)
         }
 
         const stream = streamAudio(req, res, mp3Path)
-        log(`Streaming: ${id} ${stream.join(',')}`)
+        log(`streaming: ${id} ${stream.join(',')}`)
+        return
       }
 
       throw new HTTPError(
