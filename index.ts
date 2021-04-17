@@ -4,6 +4,7 @@ import path from 'path'
 import { URL } from 'url'
 import fs from 'fs-extra'
 import downloadFile from './downloadFile'
+import { mp3Dir } from './config'
 
 const port = process.env.PORT || 3000
 
@@ -42,12 +43,12 @@ http
         return error(res, 404, 'Not found')
       }
 
-      const mp3Path = path.resolve(__dirname, 'mp3', `${id}.mp3`)
+      const mp3Path = path.join(mp3Dir, `${id}.mp3`)
       const mp3Exists = await fs.pathExists(mp3Path)
 
       if (!mp3Exists) {
         console.log(`Downloading file: ${id}`)
-        await downloadFile(id, path.dirname(mp3Path))
+        await downloadFile(id)
       }
 
       if (parsedUrl.pathname === '/mp3' && method === 'GET' && id) {
