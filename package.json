@@ -23,9 +23,9 @@
   "private": true,
   "scripts": {
     "check": "tsc --project tsconfig.json --noEmit",
-    "dev": "nodemon --exec 'PORT=3002 ts-node index.ts' --ext ts",
-    "start": "ts-node index.ts",
-    "mp3:upload": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/var/www/html/mp3"
+    "dev": "nodemon --exec 'PORT=3002 ts-node src/index.ts' --ext ts",
+    "start": "ts-node src/index.ts",
+    "mp3:upload": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/root/mp3"
   },
   "volta": {
     "node": "12.18.1"

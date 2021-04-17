@@ -4,7 +4,9 @@
  */
 
 import fs from 'fs'
+import path from 'path'
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders } from 'http'
+import HTTPError from './error'
 
 const CACHE_STAT = true
 const statCache: Record<string, number> = {}
@@ -75,19 +77,17 @@ const getRetrievedLength = (
 const pipe = (
   req: IncomingMessage,
   res: ServerResponse,
-  filePath: string,
-  onError: (
-    res: ServerResponse,
-    status: number,
-    e: Error | string,
-    privateError?: Error
-  ) => void
-): number[] | null => {
+  filePath: string
+): number[] => {
   const contentLength = getFileSize(filePath)
+  const filename = path.basename(filePath)
 
   if (contentLength === null) {
-    onError(res, 404, `${filePath} not found`)
-    return null
+    throw new HTTPError(
+      'Not found',
+      404,
+      new Error(`Could not find file ${filename}`)
+    )
   }
 
   const range = req.headers.range
@@ -114,11 +114,12 @@ const pipe = (
 
   res.on('close', () => fileStream.close())
   res.on('end', () => fileStream.close())
-  res.on('finish', () => fileStream.close()) // https://stackoverflow.com/a/14093091 - https://stackoverflow.com/a/38057516
+  // https://stackoverflow.com/a/14093091, https://stackoverflow.com/a/38057516
+  res.on('finish', () => fileStream.close())
 
-  fileStream.on('error', (error) =>
-    onError(res, 500, `Error reading file ${filePath}.`, error)
-  )
+  fileStream.on('error', (error) => {
+    throw new HTTPError('Could not read file', 500, error)
+  })
 
   fileStream.pipe(res)
 
