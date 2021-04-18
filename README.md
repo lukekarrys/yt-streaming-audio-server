@@ -22,6 +22,10 @@ A request to `/mp3?id=ID` will:
 - If not, then try to download an mp3 version from `youtube.com/watch?v=ID` to `MP3_DIR/ID.mp3`
 - Then it will stream the file from the appropriate start time based on the `range` header
 
+### Caveats
+
+- On the initial request for an `ID` that does not exist, the full file will be downloaded and transcoded to an mp3 _BEFORE_ any stream to the client begins. This has a negative effect on performance especially on large files. A different approach should be possible that would only transcode a portion based on the `range` header, since transcoding takes up a lot more time than downloading the file. The that portion could be streamed earlier, while the rest of the file is being transcoded.
+
 ### Development
 
 ```
