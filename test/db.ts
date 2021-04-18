@@ -8,6 +8,8 @@ import fixtures from './fixture.json'
 
 let db: DB | null = null
 
+const FIXTURE_DIR = path.resolve(__dirname, 'fixtures')
+
 const mockDateNow = (value: number) => {
   const RealDateNow = Date.now
   Date.now = () => value
@@ -50,7 +52,7 @@ const generateFixtures = (
 }
 
 tap.beforeEach(async () => {
-  await fs.copy(path.resolve(__dirname, 'fixtures'), MP3_DIR)
+  await fs.copy(FIXTURE_DIR, MP3_DIR)
   db = await createDb()
 })
 
@@ -187,7 +189,7 @@ tap.test('Can add a new file', async (t) => {
 
   // Simulate downloading a new file
   await fs.copy(
-    path.resolve(__dirname, 'fixtures', 'a.mp3'),
+    path.resolve(FIXTURE_DIR, 'a.mp3'),
     path.resolve(MP3_DIR, 'd.mp3')
   )
 
