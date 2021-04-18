@@ -1,4 +1,4 @@
-# http-streaming-audio
+# yt-streaming-audio-server
 
 ## Usage
 
