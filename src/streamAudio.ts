@@ -8,21 +8,19 @@ import path from 'path'
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders } from 'http'
 import HTTPError from './error'
 
-const CACHE_STAT = true
 const statCache: Record<string, number> = {}
 
 const getFileSize = (path: string): number | null => {
   if (path) {
-    if (CACHE_STAT && statCache[path]) {
+    if (statCache[path]) {
       return statCache[path]
     } else {
       if (!fs.existsSync(path)) {
         return null
       }
-      const stat = fs.statSync(path)
-      if (CACHE_STAT) statCache[path] = stat.size
-
-      return stat.size
+      const size = fs.statSync(path).size
+      statCache[path] = size
+      return size
     }
   }
 

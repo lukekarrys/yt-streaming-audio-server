@@ -1,21 +1,24 @@
-import low, { lowdb } from 'lowdb'
+import low from 'lowdb'
 import FileAsync from 'lowdb/adapters/FileAsync'
 import path from 'path'
-import { MP3_DIR } from './config'
+import { MP3_DIR, DB_PATH } from './config'
 import fs from 'fs-extra'
 import bytes from 'bytes'
 
-type Video = { id: string; lastRead: number; contentLength: number }
-type VideoLastRead = Video & { lastReadDate: Date; contentLengthHuman: string }
+export type Video = { id: string; lastRead: number; contentLength: number }
+export type VideoLastRead = Video & {
+  lastReadDate: Date
+  contentLengthHuman: string
+}
 type Schema = { videos: Video[] }
 
 export type DB = {
-  peek: (id: string, length: number) => Promise<void>
+  peek: (id: string) => Promise<Video>
   deleteLRU: (
-    maxSize: number,
-    dry?: boolean
+    maxSize: number
   ) => Promise<{ deleted: VideoLastRead[]; prevTotal: number }>
-  seedLRU: (dry?: boolean) => Promise<VideoLastRead[]>
+  seedLRU: () => Promise<VideoLastRead[]>
+  read: () => Promise<VideoLastRead[]>
   db: low.LowdbAsync<Schema>
 }
 
@@ -25,7 +28,7 @@ const videoLastRead = (video: Video): VideoLastRead => ({
   lastReadDate: new Date(video.lastRead),
 })
 
-const deleteLRU = async (db: DB['db'], maxSize: number, dry?: boolean) => {
+const deleteLRU = async (db: DB['db'], maxSize: number) => {
   const videos = db.get('videos')
 
   const total = videos
@@ -36,7 +39,9 @@ const deleteLRU = async (db: DB['db'], maxSize: number, dry?: boolean) => {
 
   if (total > maxSize) {
     const amountOver = total - maxSize
-    const leastRecent = videos.orderBy('lastRead', 'asc').value()
+    const leastRecent = videos
+      .orderBy(['lastRead', 'contentLength'], ['asc', 'desc'])
+      .value()
 
     let sum = 0
 
@@ -51,10 +56,8 @@ const deleteLRU = async (db: DB['db'], maxSize: number, dry?: boolean) => {
 
   const deleted = await Promise.all(
     toDelete.map(async (video) => {
-      if (!dry) {
-        await fs.remove(path.join(MP3_DIR, `${video.id}.mp3`))
-        await videos.remove({ id: video.id }).write()
-      }
+      await fs.remove(path.join(MP3_DIR, `${video.id}.mp3`))
+      await videos.remove({ id: video.id }).write()
       return videoLastRead(video)
     })
   )
@@ -81,16 +84,22 @@ const seedLRU = async (db: DB['db'], dry?: boolean) => {
     missingIds.map(async (id) => {
       const contentLength = fs.statSync(path.join(MP3_DIR, `${id}.mp3`)).size
       const video = { id, lastRead, contentLength }
-      if (!dry) {
-        await videos.push(video).write()
-      }
+      await videos.push(video).write()
       return videoLastRead(video)
     })
   )
 }
 
-const peek = async (db: DB['db'], id: string, contentLength: number) => {
+const read = async (db: DB['db']) => {
+  return db
+    .get('videos')
+    .map((v) => videoLastRead(v))
+    .value()
+}
+
+const peek = async (db: DB['db'], id: string) => {
   const videos = db.get('videos')
+  const contentLength = fs.statSync(path.join(MP3_DIR, `${id}.mp3`)).size
   const update = { lastRead: Date.now(), contentLength }
   const video = { id }
 
@@ -99,20 +108,21 @@ const peek = async (db: DB['db'], id: string, contentLength: number) => {
     : videos.push({ ...video, ...update })
 
   await operation.write()
+
+  return videoLastRead({ ...video, ...update })
 }
 
 const createDb = async (): Promise<DB> => {
-  const adapter = new FileAsync<Schema>(
-    path.resolve(__dirname, '..', 'db.json')
-  )
+  const adapter = new FileAsync<Schema>(DB_PATH)
 
   const db = await low(adapter)
   await db.defaults({ videos: [] }).write()
 
   return {
-    peek: (id: string, contentLength: number) => peek(db, id, contentLength),
-    deleteLRU: (maxSize: number, dry?: boolean) => deleteLRU(db, maxSize, dry),
-    seedLRU: (dry?: boolean) => seedLRU(db, dry),
+    peek: (id: string) => peek(db, id),
+    deleteLRU: (maxSize: number) => deleteLRU(db, maxSize),
+    seedLRU: () => seedLRU(db),
+    read: () => read(db),
     db,
   }
 }

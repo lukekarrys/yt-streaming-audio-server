@@ -1,17 +1,17 @@
 import http, { IncomingMessage, ServerResponse } from 'http'
-import streamAudio from './streamAudio'
+import prettyMs from 'pretty-ms'
+import * as date from 'date-fns'
 import path from 'path'
 import { URL } from 'url'
 import fs from 'fs-extra'
 import ms from 'ms'
 import bytes from 'bytes'
+import { MP3_DIR, MAX_DIR_SIZE, DELETE_LRU_INTERVAL } from './config'
 import createDb, { DB } from './db'
 import downloadFile from './downloadFile'
-import { MP3_DIR, MAX_DIR_SIZE, DELETE_LRU_INTERVAL } from './config'
+import streamAudio from './streamAudio'
 import HTTPError from './error'
 import isValidId from './validId'
-import prettyMs from 'pretty-ms'
-import * as date from 'date-fns'
 
 const PORT = process.env.PORT || 3000
 
@@ -29,11 +29,8 @@ const requestListener = async (
   const randomId = Math.random().toString().slice(2, 6)
   const reqId = `[${randomId}-${method}-${strUrl(parsedUrl)}]`
 
-  const logRequest = (...args: unknown[]) =>
-    console.log('[request]', reqId, ...args)
-
-  const logRequestError = (...args: unknown[]) =>
-    console.error('[error]', reqId, ...args)
+  const logRequest = console.log.bind(null, '[request]', reqId)
+  const logRequestError = console.error.bind(null, '[error]', reqId)
 
   logRequest()
 
@@ -53,7 +50,7 @@ const requestListener = async (
       logRequest(`streaming: ${stream.join(',')}`)
 
       // File has been used so update the last read time
-      await db.peek(id, stream[stream.length - 1])
+      await db.peek(id)
 
       return
     }
@@ -85,7 +82,7 @@ const requestListener = async (
 }
 
 const ensureDb = async (db: DB) => {
-  const log = (...args: unknown[]) => console.log('[db]', ...args)
+  const log = console.log.bind(null, '[db]')
 
   // Dont run these in parallel. They need to be sequential so
   // the the db is always seeded before deleting any files

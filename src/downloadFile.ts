@@ -5,13 +5,13 @@ import isValidId from './validId'
 
 const downloadFile = (
   id: string,
-  log: (...args: unknown[]) => void
+  log = console.log
 ): Promise<{ output: string }> => {
   // Double check that its a valid id so we are less likely to
   // accidentally pass something arbitrary to spawn
   isValidId(id)
 
-  const ytLog = (...args: unknown[]) => log('[youtube-dl]', ...args)
+  const ytLog = log.bind(null, '[youtube-dl]')
 
   const outputFile = path.join(MP3_DIR, `${id}.mp3`)
 

@@ -17,7 +17,9 @@
     "@types/lowdb": "^1.0.9",
     "@types/ms": "^0.7.31",
     "@types/node": "^14.14.32",
+    "@types/tap": "^15.0.0",
     "prettier": "^2.2.1",
+    "tap": "^15.0.2",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   },
@@ -32,8 +34,9 @@
   "scripts": {
     "check": "tsc --project tsconfig.json --noEmit",
     "dev": "nodemon --exec 'PORT=3002 ts-node src/index.ts' --ext ts",
+    "lint": "prettier -l .",
     "start": "ts-node src/index.ts",
-    "mp3:upload": " rsync -avP --delete --exclude=.DS_Store mp3/ mp3:/root/mp3"
+    "test": "NODE_ENV=test tap --ts"
   },
   "volta": {
     "node": "12.18.1"
