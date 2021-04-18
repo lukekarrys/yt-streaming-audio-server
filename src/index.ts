@@ -116,7 +116,7 @@ const ensureDb = async (db: DB) => {
   )
 
   const next = ms(DELETE_LRU_INTERVAL)
-  const nextDate = date.format(new Date(Date.now() + next), 'M/d/yy H:mm:ssXX')
+  const nextDate = date.format(new Date(Date.now() + next), 'M/d/yy HH:mm:ssXX')
   log(`ensure db every ${DELETE_LRU_INTERVAL}, again at ${nextDate}`)
   setTimeout(() => ensureDb(db), next)
 }
