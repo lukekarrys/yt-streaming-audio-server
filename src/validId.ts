@@ -29,7 +29,7 @@ const validChars = [
 ].join('')
 
 // It's always 11 characters long
-const isValidRegex = new RegExp(`^[${validChars}]{11}$`)
+const isValidRegex = new RegExp(`^[${validChars.replace('-', '\\-')}]{11}$`)
 
 const isValid = (id: string | null): id is string => {
   if (!id || !isValidRegex.test(id)) {
