@@ -5,6 +5,7 @@
   "author": "Luke Karrys",
   "dependencies": {
     "bytes": "^3.1.0",
+    "date-fns": "^2.21.1",
     "fs-extra": "^9.1.0",
     "lowdb": "^1.0.0",
     "ms": "^2.1.3",

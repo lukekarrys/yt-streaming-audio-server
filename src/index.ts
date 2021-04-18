@@ -11,6 +11,7 @@ import { MP3_DIR, MAX_DIR_SIZE, DELETE_LRU_INTERVAL } from './config'
 import HTTPError from './error'
 import isValidId from './validId'
 import prettyMs from 'pretty-ms'
+import * as date from 'date-fns'
 
 const PORT = process.env.PORT || 3000
 
@@ -115,7 +116,7 @@ const ensureDb = async (db: DB) => {
   )
 
   const next = ms(DELETE_LRU_INTERVAL)
-  const nextDate = new Date(Date.now() + next).toJSON()
+  const nextDate = date.format(new Date(Date.now() + next), 'M/d/yy H:mm:ssXX')
   log(`ensure db every ${DELETE_LRU_INTERVAL}, again at ${nextDate}`)
   setTimeout(() => ensureDb(db), next)
 }
