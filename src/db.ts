@@ -11,7 +11,10 @@ type Schema = { videos: Video[] }
 
 export type DB = {
   peek: (id: string, length: number) => Promise<void>
-  deleteLRU: (maxSize: number, dry?: boolean) => Promise<VideoLastRead[]>
+  deleteLRU: (
+    maxSize: number,
+    dry?: boolean
+  ) => Promise<{ deleted: VideoLastRead[]; prevTotal: number }>
   seedLRU: (dry?: boolean) => Promise<VideoLastRead[]>
   db: low.LowdbAsync<Schema>
 }
@@ -22,11 +25,7 @@ const videoLastRead = (video: Video): VideoLastRead => ({
   lastReadDate: new Date(video.lastRead),
 })
 
-const deleteLRU = async (
-  db: DB['db'],
-  maxSize: number,
-  dry?: boolean
-): Promise<VideoLastRead[]> => {
+const deleteLRU = async (db: DB['db'], maxSize: number, dry?: boolean) => {
   const videos = db.get('videos')
 
   const total = videos
@@ -44,13 +43,13 @@ const deleteLRU = async (
     for (const video of leastRecent) {
       sum += video.contentLength
       toDelete.push(video)
-      if (sum > amountOver) {
+      if (sum >= amountOver) {
         break
       }
     }
   }
 
-  return Promise.all(
+  const deleted = await Promise.all(
     toDelete.map(async (video) => {
       if (!dry) {
         await fs.remove(path.join(MP3_DIR, `${video.id}.mp3`))
@@ -59,6 +58,11 @@ const deleteLRU = async (
       return videoLastRead(video)
     })
   )
+
+  return {
+    prevTotal: total,
+    deleted,
+  }
 }
 
 const seedLRU = async (db: DB['db'], dry?: boolean) => {
