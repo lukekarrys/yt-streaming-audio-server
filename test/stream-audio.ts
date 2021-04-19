@@ -132,10 +132,10 @@ tap.test('Returns an error for a file that does not exist', async (t) => {
   server.close()
 })
 
-tap.test('Returns full response on malformed ranges', async (t) => {
-  // TODO: should this return a 416? From what I've seen it is ok to
-  // return the full file for bad or unsupported ranges. And a 416 should
-  // be limited to out of range requests
+tap.test('Returns full response on some requests', async (t) => {
+  // This is based on what range-parser returns. Could be a 416 but
+  // its purposefully a 200 in this case
+  // https://github.com/jshttp/range-parser/issues/19#issuecomment-510156740
   const fixtures = generateFixturesById({})
   const fixture = fixtures[IDS.a]
   const server = await startServer((req, res) => {
