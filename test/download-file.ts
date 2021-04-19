@@ -1,34 +1,7 @@
 import tap from 'tap'
 import path from 'path'
-import { EventEmitter } from 'events'
+import createMockDownload from './fixtures/mock-download'
 import { IDS } from './fixtures'
-
-type Mock = (modulePath: string, mocks: Record<string, any>) => any
-
-const createMockDownload = (mock: Mock, code: 0 | 1) =>
-  mock('../src/download-file', {
-    child_process: {
-      spawn: (command: string, args: string[]) => {
-        const fullCommand = `${command} ${args.join(' ')}`
-        const cmd = new EventEmitter()
-        const stdout = new EventEmitter()
-        const stderr = new EventEmitter()
-
-        setImmediate(() => {
-          stdout.emit('data', fullCommand)
-          stderr.emit('data', fullCommand)
-          setImmediate(() => cmd.emit('close', code))
-        })
-
-        // @ts-ignore
-        cmd.stdout = stdout
-        // @ts-ignore
-        cmd.stderr = stderr
-
-        return cmd
-      },
-    },
-  }).default as (file: string) => Promise<string>
 
 const command = (filePath: string) => {
   const dir = path.dirname(filePath)

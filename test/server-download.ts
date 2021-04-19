@@ -1,6 +1,6 @@
 import tap from 'tap'
 import fetch from 'node-fetch'
-import createMockServer from './fixtures/server'
+import createMockServer from './fixtures/mock-server'
 import {
   IDS,
   setupFixtures,
@@ -77,7 +77,7 @@ tap.test(
   async (t) => {
     const server = await createMockServer(t.mock, {
       idToCopy: IDS.a,
-      readStreamError: true,
+      readStreamError: 'This is the mock error message',
     })()
 
     const res1 = await fetch(`http://localhost:${server.port}/mp3?id=${IDS.d}`)

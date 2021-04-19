@@ -11,7 +11,7 @@ const mockServer = (
   {
     idToCopy,
     readStreamError,
-  }: { idToCopy?: string; readStreamError?: boolean } = {}
+  }: { idToCopy?: string; readStreamError?: string } = {}
 ) =>
   mock('../../src/server', {
     '../../src/download-file': async (outputFile: string) => {
@@ -22,15 +22,16 @@ const mockServer = (
         throw new Error('Could not download file')
       }
     },
+    '../../src/debug': {
+      log: () => {},
+      error: () => {},
+    },
     'fs-extra': {
       ...fs,
       createReadStream: readStreamError
         ? (p: PathLike) => {
-            console.log('i made a stream', p)
             const stream = fs.createReadStream(p)
-            setImmediate(() => stream.emit('error', new Error('mock error')))
-            // @ts-ignore
-            stream.pipe = () => {}
+            setImmediate(() => stream.emit('error', new Error(readStreamError)))
             return stream
           }
         : fs.createReadStream,

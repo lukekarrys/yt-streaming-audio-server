@@ -1,5 +1,5 @@
 import tap from 'tap'
-import createMockServer from './fixtures/server'
+import createMockServer from './fixtures/mock-server'
 import { setupFixtures } from './fixtures'
 
 const wait = (time: number) => new Promise((r) => setTimeout(r, time))
@@ -26,11 +26,11 @@ tap.only('Deletes files on init if too big', async (t) => {
 tap.test('Runs interval based on option', async (t) => {
   const server = await createMockServer(t.mock)({
     maxDirSize: '1tb',
-    deleteLRUInterval: '1s',
+    deleteLRUInterval: '100ms',
   })
 
   // Wait some seconds so interval gets run
-  await wait(5000)
+  await wait(1000)
 
   const all = await server.db.read()
   t.equal(all.length, 3, 'everything is still there even after multiple runs')

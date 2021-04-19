@@ -1,7 +1,7 @@
 import tap from 'tap'
 import fetch, { Headers, HeadersInit } from 'node-fetch'
 import { Server } from '../src/server'
-import createMockServer from './fixtures/server'
+import createMockServer from './fixtures/mock-server'
 import { IDS, setupFixtures, generateFixturesById } from './fixtures'
 
 let serverHandler: Server | null = null

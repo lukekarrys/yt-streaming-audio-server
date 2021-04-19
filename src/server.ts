@@ -10,6 +10,7 @@ import streamAudio from './stream-audio'
 import HTTPError from './error'
 import isValidId from './validate-id'
 import { PORT } from './config'
+import * as debug from './debug'
 
 const ABSOLUTE_URL = 'http://a.a'
 const parseUrl = (req: IncomingMessage) => new URL(req.url!, ABSOLUTE_URL)
@@ -45,8 +46,8 @@ const requestListener = async (
   const randomId = Math.random().toString().slice(2, 6)
   const reqId = `[${randomId}-${method}-${strUrl(parsedUrl)}]`
 
-  const logRequest = console.log.bind(null, '[request]', reqId)
-  const logRequestError = console.error.bind(null, '[error]', reqId)
+  const logRequest = debug.log.bind(null, '[request]', reqId)
+  const logRequestError = debug.error.bind(null, '[error]', reqId)
 
   logRequest()
 
@@ -98,7 +99,7 @@ const ensureDb = async (
   db: DB,
   { maxDirSize, deleteLRUInterval }: ServerOptions
 ): Promise<void> => {
-  const log = console.log.bind(null, '[db]')
+  const log = debug.log.bind(null, '[db]')
 
   // Dont run these in parallel. They need to be sequential so
   // the the db is always seeded before deleting any files
