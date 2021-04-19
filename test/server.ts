@@ -102,46 +102,35 @@ tap.test('Serves a partial file with a 206', async (t) => {
   t.equal(res1.headers.get('accept-ranges'), 'bytes')
   t.same(res1.headers.get('content-length'), 11)
   t.equal(res1.data instanceof Buffer && Buffer.byteLength(res1.data), 11)
+
+  const res2 = await get(`/mp3?id=${fixture.id}`, {
+    range: 'bytes=20-',
+  })
+
+  t.equal(res2.status, 206)
+  t.equal(res2.headers.get('content-type'), 'audio/mpeg')
+  t.equal(
+    res2.headers.get('content-range'),
+    `bytes 20-${fixture.contentLength - 1}/${fixture.contentLength}`
+  )
+  t.equal(res2.headers.get('accept-ranges'), 'bytes')
+  t.same(res2.headers.get('content-length'), fixture.contentLength - 20)
+  t.equal(
+    res2.data instanceof Buffer && Buffer.byteLength(res2.data),
+    fixture.contentLength - 20
+  )
+
+  const res3 = await get(`/mp3?id=${fixture.id}`, {
+    range: 'bytes=0-20',
+  })
+
+  t.equal(res3.status, 206)
+  t.equal(res3.headers.get('content-type'), 'audio/mpeg')
+  t.equal(
+    res3.headers.get('content-range'),
+    `bytes 0-20/${fixture.contentLength}`
+  )
+  t.equal(res3.headers.get('accept-ranges'), 'bytes')
+  t.same(res3.headers.get('content-length'), 21)
+  t.equal(res3.data instanceof Buffer && Buffer.byteLength(res3.data), 21)
 })
-
-tap.test(
-  'Serves a partial file with a 206 with an open ended range',
-  async (t) => {
-    t.ok(serverHandler)
-    serverHandler = serverHandler!
-
-    const fixtures = generateFixturesById({})
-    const fixture = fixtures[IDS.a]
-
-    const res1 = await get(`/mp3?id=${fixture.id}`, {
-      range: 'bytes=20-',
-    })
-
-    t.equal(res1.status, 206)
-    t.equal(res1.headers.get('content-type'), 'audio/mpeg')
-    t.equal(
-      res1.headers.get('content-range'),
-      `bytes 20-${fixture.contentLength - 1}/${fixture.contentLength}`
-    )
-    t.equal(res1.headers.get('accept-ranges'), 'bytes')
-    t.same(res1.headers.get('content-length'), fixture.contentLength - 20)
-    t.equal(
-      res1.data instanceof Buffer && Buffer.byteLength(res1.data),
-      fixture.contentLength - 20
-    )
-
-    const res2 = await get(`/mp3?id=${fixture.id}`, {
-      range: 'bytes=-20',
-    })
-
-    t.equal(res2.status, 206)
-    t.equal(res2.headers.get('content-type'), 'audio/mpeg')
-    t.equal(
-      res2.headers.get('content-range'),
-      `bytes 0-20/${fixture.contentLength}`
-    )
-    t.equal(res2.headers.get('accept-ranges'), 'bytes')
-    t.same(res2.headers.get('content-length'), 21)
-    t.equal(res2.data instanceof Buffer && Buffer.byteLength(res2.data), 21)
-  }
-)
