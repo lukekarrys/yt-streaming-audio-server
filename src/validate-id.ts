@@ -1,5 +1,3 @@
-import HTTPError from './error'
-
 const getChars = (startChar: string | number, length: number) => {
   const startCode = startChar.toString().charCodeAt(0)
   return [...Array(length)].map((__, i) => String.fromCharCode(i + startCode))
@@ -33,7 +31,7 @@ const isValidRegex = new RegExp(`^[${validChars.replace('-', '\\-')}]{11}$`)
 
 const isValid = (id: string | null): id is string => {
   if (!id || !isValidRegex.test(id)) {
-    throw new HTTPError('Not found', 404, `id is invalid: ${id}`)
+    throw new Error(`id is invalid: ${id}`)
   }
   return typeof id === 'string'
 }

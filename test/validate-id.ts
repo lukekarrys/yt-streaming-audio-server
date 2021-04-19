@@ -1,5 +1,5 @@
 import tap from 'tap'
-import validId from '../src/validId'
+import validId from '../src/validate-id'
 
 tap.test('Validates an id', (t) => {
   t.ok(validId('-----------'))

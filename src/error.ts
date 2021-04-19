@@ -1,8 +1,8 @@
 class HTTPError extends Error {
   status: number
-  originalError?: Error
+  originalError: Error
 
-  constructor(message: string, status: number, originalError?: Error | string) {
+  constructor(message: string, status: number, originalError: Error | string) {
     super(message)
     this.status = status
     this.originalError =

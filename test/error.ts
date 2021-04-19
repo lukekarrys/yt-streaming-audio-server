@@ -4,7 +4,7 @@ import HTTPError from '../src/error'
 tap.test('Makes and error with a status code', (t) => {
   const message = 'message'
   const status = 404
-  const err = new HTTPError(message, status)
+  const err = new HTTPError(message, status, '')
   t.equal(err.message, message)
   t.equal(err.status, status)
   t.end()

@@ -8,7 +8,7 @@ import path from 'path'
 
 const production = process.env.NODE_ENV === 'production'
 const test = process.env.NODE_ENV === 'test'
-const tapChildId = process.env.TAP_CHILD_ID
+const tapChildId = process.env.TAP_CHILD_ID ?? '0'
 
 export const MP3_DIR = test
   ? path.resolve(__dirname, '..', 'test', `mp3-${tapChildId}`)
@@ -23,3 +23,5 @@ export const DB_PATH = test
 export const MAX_DIR_SIZE = production ? '18gb' : '1tb'
 
 export const DELETE_LRU_INTERVAL = '1d'
+
+export const PORT = process.env.PORT || 3000 + +tapChildId
