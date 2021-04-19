@@ -4,38 +4,48 @@ import fs from 'fs-extra'
 import { FIXTURE_DIR } from './index'
 import { PathLike } from 'node:fs'
 
-type Mock = (modulePath: string, mocks: Record<string, any>) => any
+const createBadReadStream = (errMessage?: string) =>
+  errMessage
+    ? (p: PathLike) => {
+        const stream = fs.createReadStream(p)
+        setImmediate(() => stream.emit('error', new Error(errMessage)))
+        return stream
+      }
+    : fs.createReadStream
+
+const createCopyFixture = (idToCopy?: string) => async (outputFile: string) => {
+  if (idToCopy) {
+    await fs.copy(path.resolve(FIXTURE_DIR, `${idToCopy}.mp3`), outputFile)
+    return outputFile
+  } else {
+    throw new Error('Could not download file')
+  }
+}
+
+type MockServer = (
+  modulePath: string,
+  mocks: Record<string, any>
+) => {
+  default: (options?: ServerOptions) => Promise<Server>
+}
 
 const mockServer = (
-  mock: Mock,
+  mock: MockServer,
   {
     idToCopy,
     readStreamError,
   }: { idToCopy?: string; readStreamError?: string } = {}
 ) =>
   mock('../../src/server', {
-    '../../src/download-file': async (outputFile: string) => {
-      if (idToCopy) {
-        await fs.copy(path.resolve(FIXTURE_DIR, `${idToCopy}.mp3`), outputFile)
-        return outputFile
-      } else {
-        throw new Error('Could not download file')
-      }
-    },
+    '../../src/download-file': createCopyFixture(idToCopy),
     '../../src/debug': {
       log: () => {},
       error: () => {},
     },
     'fs-extra': {
       ...fs,
-      createReadStream: readStreamError
-        ? (p: PathLike) => {
-            const stream = fs.createReadStream(p)
-            setImmediate(() => stream.emit('error', new Error(readStreamError)))
-            return stream
-          }
-        : fs.createReadStream,
+      createReadStream: createBadReadStream(readStreamError),
     },
-  }).default as (options?: ServerOptions) => Promise<Server>
+  }).default
 
 export default mockServer
