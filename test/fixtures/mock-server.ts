@@ -17,8 +17,10 @@ const createCopyFixture = (idToCopy?: string) => async (outputFile: string) => {
   if (idToCopy) {
     await fs.copy(path.resolve(FIXTURE_DIR, `${idToCopy}.mp3`), outputFile)
     return outputFile
-  } else {
+  } else if (idToCopy === 'error') {
     throw new Error('Could not download file')
+  } else {
+    return outputFile
   }
 }
 

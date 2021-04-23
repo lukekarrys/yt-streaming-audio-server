@@ -54,7 +54,7 @@ const requestListener = async (
   const id = parsedUrl.searchParams.get('id')
 
   try {
-    if (parsedUrl.pathname === '/mp3' && method === 'GET' && id) {
+    if (id) {
       try {
         isValidId(id)
       } catch (e) {
@@ -62,27 +62,46 @@ const requestListener = async (
       }
 
       let mp3 = await db.get(id)
+      const matchReq = `${method}-${parsedUrl.pathname}`
 
-      if (!mp3) {
-        logRequest(`cached file not found: ${id}`)
-        mp3 = await db.download(id, async (id) => {
-          logRequest('[download]', await downloadFile(id))
+      if (matchReq === 'GET-/mp3') {
+        if (!mp3) {
+          logRequest(`cached file not found: ${id}`)
+          mp3 = await db.download(id, async (id) =>
+            logRequest('[download]', await downloadFile(id))
+          )
+        }
+
+        const [start, end, length] = streamAudio(req, res, mp3, (err) => {
+          // This happens if the read stream for the file emits an error
+          // I couldn't figure out an async/await way to do this so this
+          // just sends the error response to the client just like the catch
+          // block does. Something something what the heck is the event loop?
+          sendError(res, err, logRequestError)
         })
+        logRequest(`streaming: ${start}-${end}/${length}`)
+
+        // File has been used so update the last read time
+        await db.peek(id)
+
+        return
+      } else if (matchReq === 'GET-/cache') {
+        if (!mp3) {
+          logRequest(`file not cached: ${id}`)
+          // Don't await anything, just kick off the download
+          // this is jused used to prime the cache
+          db.download(id, async (id) =>
+            logRequest('[download]', await downloadFile(id))
+          )
+        } else {
+          logRequest('file already cached')
+        }
+
+        res.writeHead(200, { 'content-type': 'text/plain' })
+        res.end('ok')
+
+        return
       }
-
-      const [start, end, length] = streamAudio(req, res, mp3, (err) => {
-        // This happens if the read stream for the file emits an error
-        // I couldn't figure out an async/await way to do this so this
-        // just sends the error response to the client just like the catch
-        // block does. Something something what the heck is the event loop?
-        sendError(res, err, logRequestError)
-      })
-      logRequest(`streaming: ${start}-${end}/${length}`)
-
-      // File has been used so update the last read time
-      await db.peek(id)
-
-      return
     }
 
     throw new HTTPError(
