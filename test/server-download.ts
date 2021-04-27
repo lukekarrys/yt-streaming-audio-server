@@ -107,6 +107,23 @@ tap.test(
   }
 )
 
+tap.test(
+  'Logs an error if error happens while trying to cache a file',
+  async (t) => {
+    const server = await createMockServer(t.mock, { idToCopy: 'error' })()
+
+    const res = await fetch(`http://localhost:${server.port}/cache?id=${IDS.d}`)
+    const data = await res.text()
+
+    t.equal(res.status, 200)
+    t.equal(data, 'ok')
+    t.equal(server.errors[0][3], 'Could not download file')
+
+    await server.db.teardown()
+    server.close()
+  }
+)
+
 tap.test('Downloads a file but errors', async (t) => {
   const server = await createMockServer(t.mock, { idToCopy: 'error' })()
 

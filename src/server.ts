@@ -16,11 +16,7 @@ const ABSOLUTE_URL = 'http://a.a'
 const parseUrl = (req: IncomingMessage) => new URL(req.url!, ABSOLUTE_URL)
 const strUrl = (url: URL) => url.toString().replace(ABSOLUTE_URL, '')
 
-const sendError = (
-  res: ServerResponse,
-  error: Error,
-  log: (...args: unknown[]) => void
-) => {
+const getStatusAndMessage = (error: Error) => {
   const status = error instanceof HTTPError ? error.status : 500
 
   const message =
@@ -29,9 +25,10 @@ const sendError = (
   const internalMessage =
     error instanceof HTTPError ? error.originalError.message : error.message
 
-  log(status, message)
-  log(internalMessage)
+  return { status, message, internalMessage }
+}
 
+const sendError = (res: ServerResponse, status: number, message: string) => {
   res.writeHead(status)
   res.end(JSON.stringify({ error: message }))
 }
@@ -77,7 +74,10 @@ const requestListener = async (
           // I couldn't figure out an async/await way to do this so this
           // just sends the error response to the client just like the catch
           // block does. Something something what the heck is the event loop?
-          sendError(res, err, logRequestError)
+          const { status, message, internalMessage } = getStatusAndMessage(err)
+          logRequestError(status, message)
+          logRequestError(internalMessage)
+          sendError(res, status, message)
         })
         logRequest(`streaming: ${start}-${end}/${length}`)
 
@@ -90,9 +90,17 @@ const requestListener = async (
           logRequest(`file not cached: ${id}`)
           // Don't await anything, just kick off the download
           // this is jused used to prime the cache
+
           db.download(id, async (id) =>
             logRequest('[download]', await downloadFile(id))
-          )
+          ).catch((err) => {
+            // If this fails, the response will already have been sent so
+            // just log the internal error message for visibility in the logs
+            logRequestError(
+              '[download]',
+              getStatusAndMessage(err).internalMessage
+            )
+          })
         } else {
           logRequest('file already cached')
         }
@@ -109,8 +117,11 @@ const requestListener = async (
       404,
       'Request not matched by path/method/id'
     )
-  } catch (error) {
-    sendError(res, error, logRequestError)
+  } catch (err) {
+    const { status, message, internalMessage } = getStatusAndMessage(err)
+    logRequestError(status, message)
+    logRequestError(internalMessage)
+    sendError(res, status, message)
   }
 }
 

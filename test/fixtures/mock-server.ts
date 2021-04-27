@@ -14,11 +14,11 @@ const createBadReadStream = (errMessage?: string) =>
     : fs.createReadStream
 
 const createCopyFixture = (idToCopy?: string) => async (outputFile: string) => {
-  if (idToCopy) {
+  if (idToCopy === 'error') {
+    throw new Error('Could not download file')
+  } else if (idToCopy) {
     await fs.copy(path.resolve(FIXTURE_DIR, `${idToCopy}.mp3`), outputFile)
     return outputFile
-  } else if (idToCopy === 'error') {
-    throw new Error('Could not download file')
   } else {
     return outputFile
   }
@@ -28,7 +28,9 @@ type MockServer = (
   modulePath: string,
   mocks: Record<string, any>
 ) => {
-  default: (options?: ServerOptions) => Promise<Server>
+  default: (
+    options?: ServerOptions
+  ) => Promise<Server & { logs: unknown[][]; errors: unknown[][] }>
 }
 
 const mockServer = (
@@ -37,17 +39,31 @@ const mockServer = (
     idToCopy,
     readStreamError,
   }: { idToCopy?: string; readStreamError?: string } = {}
-) =>
-  mock('../../src/server', {
+) => {
+  const logs: unknown[][] = []
+  const errors: unknown[][] = []
+
+  const server = mock('../../src/server', {
     '../../src/download-file': createCopyFixture(idToCopy),
     '../../src/debug': {
-      log: () => {},
-      error: () => {},
+      log: (...args: unknown[]) => {
+        logs.push(args)
+      },
+      error: (...args: unknown[]) => {
+        errors.push(args)
+      },
     },
     'fs-extra': {
       ...fs,
       createReadStream: createBadReadStream(readStreamError),
     },
   }).default
+
+  return async (options?: ServerOptions) => ({
+    ...(await server(options)),
+    logs,
+    errors,
+  })
+}
 
 export default mockServer
